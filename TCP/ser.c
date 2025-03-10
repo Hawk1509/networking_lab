@@ -1,3 +1,5 @@
+//TCP 
+
 #include <sys/socket.h>
 #include <stdio.h>
 #include <netinet/in.h>
@@ -7,9 +9,9 @@ void main()
 	char buf[100];
 	sock_desc = socket(AF_INET, SOCK_STREAM, 0);
 	struct sockaddr_in server_addr;
-	server_addr.sin_family=AF_INET;
-	server_addr.sin_port=2005;
-	server_addr.sin_addr.s_addr= INADDR_ANY;
+		server_addr.sin_family=AF_INET;
+		server_addr.sin_port=2005;
+		server_addr.sin_addr.s_addr= INADDR_ANY;
 	bind(sock_desc,(struct sockaddr*)&server_addr, sizeof(server_addr));
 	listen(sock_desc, 3);
 	struct sockaddr_in client_addr;
