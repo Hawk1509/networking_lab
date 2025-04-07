@@ -7,7 +7,7 @@
 #define PORT 8080
 #define BUFFER_SIZE 1024
 
-int main() {
+void main() {
 	int sock;
 	struct sockaddr_in serv_addr;
 	char buffer[BUFFER_SIZE] = {0};
@@ -56,5 +56,4 @@ int main() {
 
 	printf("All frames sent successfully.\n");
 	close(sock);
-	return 0;
 }

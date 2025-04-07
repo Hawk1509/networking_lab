@@ -6,7 +6,7 @@
 #define PORT 8080
 #define BUFFER_SIZE 1024
 
-int main() {
+void main() {
 int server_fd, new_socket;
 struct sockaddr_in address;
 int addrlen = sizeof(address);
@@ -67,5 +67,4 @@ printf("Server: Sent acknowledgment for frame %d\n", frame);
 
 close(new_socket);
 close(server_fd);
-return 0;
 }
