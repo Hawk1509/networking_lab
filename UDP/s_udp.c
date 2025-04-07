@@ -34,7 +34,7 @@ void main()
 
     // NOTE: This recv() call uses client_sock_desc, which is uninitialized.
     // For UDP, recvfrom() is sufficient, so this line may not work as expected.
-    int bytes_received = recv(client_sock_desc, buf, 100, 0);
+
 
     // Print the message received from the client
     printf("\nMessage from client: %s\n", buf);
