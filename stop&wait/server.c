@@ -43,12 +43,12 @@ void main() {
             break;
         }
 
-        sscanf(buffer, "%d", &frame);
+        sscanf(buffer, "%d", &frame); //read string and convert to int	
         printf("Server: Received frame %d\n", frame);
 
         // Send acknowledgment
         char ack[BUFFER_SIZE];
-        snprintf(ack, sizeof(ack), "ACK for frame %d", frame);
+        snprintf(ack, sizeof(ack), "ACK for frame %d", frame); // print string
         send(client_sock_desc, ack, strlen(ack), 0);
         printf("Server: Sent acknowledgment for frame %d\n", frame);
     }

@@ -9,7 +9,7 @@
 
 void main() {
     int sock_desc, valread;
-    char buf[BUFFER_SIZE] = {0};
+    char buffer[BUFFER_SIZE] = {0};
     int frame = 0, total_frames;
 
     // Create socket file descriptor
@@ -21,7 +21,7 @@ void main() {
     server.sin_port = htons(PORT);  // Convert to network byte order
 
     // Convert IPv4 address from text to binary form
-    inet_pton(AF_INET, "127.0.0.1", &server.sin_addr);
+    inet_pton(AF_INET, "127.0.0.1", &server.sin_addr); //internet protocol address to network presentation
 
     // Connect to the server
     connect(sock_desc, (struct sockaddr *)&server, sizeof(server));
@@ -31,15 +31,15 @@ void main() {
 
     while (frame < total_frames) {
         // Send frame
-        snprintf(buf, sizeof(buf), "%d", frame);  // Convert the frame number to a string
-        send(sock_desc, buf, strlen(buf), 0);     // Send the frame to the server
+        snprintf(buffer, sizeof(buffer), "%d", frame);  // Convert the frame number to a string
+        send(sock_desc, buffer, strlen(buffer), 0);     // Send the frame to the server
         printf("Client: Sent frame %d\n", frame);
 
         // Wait for acknowledgment from the server
-        memset(buf, 0, BUFFER_SIZE);  // Clear the buffer
-        valread = read(sock_desc, buf, BUFFER_SIZE);
+        memset(buffer, 0, BUFFER_SIZE);  // Clear the buffer
+        valread = read(sock_desc, buffer, BUFFER_SIZE);
         if (valread > 0) {
-            printf("Client: Received acknowledgment: %s\n", buf);
+            printf("Client: Received acknowledgment: %s\n", buffer);
             frame++;  // Move to the next frame after receiving acknowledgment
         } else {
             printf("Client: No acknowledgment received. Retransmitting frame %d\n", frame);
