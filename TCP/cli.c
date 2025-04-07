@@ -3,9 +3,12 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>  // Needed for inet_addr()
 
+#define PORT 2005
+#define BUFFER_SIZE 100
+
 void main() {
     int sock_desc, k;
-    char buf[100];
+    char buffer[BUFFER_SIZE] = {0}; // Buffer to store the message
 
     // Create a TCP socket (IPv4, TCP)
     sock_desc = socket(AF_INET, SOCK_STREAM, 0);
@@ -13,17 +16,18 @@ void main() {
     // Set up the server's address
     struct sockaddr_in server;
     server.sin_family = AF_INET;                   // Use IPv4 addresses
-    server.sin_port = 2005;                         // Port number (ideally use htons(2005))
-    server.sin_addr.s_addr = inet_addr("127.0.0.1"); // Server IP: localhost
+    server.sin_port = htons(PORT);                         // Port number (ideally use htons(2005))
+
+    inet_pton(AF_INET,"127.0.0.1",&server.sin_addr);    // Convert IPv4 address from text to binary form
 
     // Connect the socket to the server
     k = connect(sock_desc, (struct sockaddr*)&server, sizeof(server));
 
     // Prompt the user for a message to send
     printf("Enter message to be sent: ");
-    fgets(buf, 100, stdin);
+    fgets(buffer, 100, stdin);
 
     // Send the message to the server
-    k = send(sock_desc, buf, 100, 0);
+    k = send(sock_desc, buffer, 100, 0);
 
 }
