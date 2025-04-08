@@ -9,18 +9,14 @@
 #include <unistd.h>
 
 #define PORT 5035
-#define MAX 4096
+#define BUFFER_SIZE 4096
 
 int main(int argc, char *argv[]) {
     int sock_desc, client_sock_desc, client_len;
-    char buffer[MAX], file_content[MAX];
+    char buffer[BUFFER_SIZE], file_content[BUFFER_SIZE];
 
     // Create socket
     sock_desc = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock_desc < 0) {
-        perror("Socket creation failed");
-        exit(EXIT_FAILURE);
-    }
 
     // Configure server settings
     struct sockaddr_in server_addr, client_addr;
@@ -44,8 +40,8 @@ int main(int argc, char *argv[]) {
     close(sock_desc);
 
     // Read the filename from the client
-    memset(buffer, 0, MAX);
-    read(client_sock_desc, buffer, MAX);
+    memset(buffer, 0, BUFFER_SIZE);
+    read(client_sock_desc, buffer, BUFFER_SIZE);
     buffer[strcspn(buffer, "\n")] = 0;  // Remove trailing newline
     printf("\nClient requested file: %s\n", buffer);
 
@@ -59,7 +55,7 @@ int main(int argc, char *argv[]) {
     } else {
         // Send file content to the client
         printf("\nTransferring file...\n");
-        while (fgets(file_content, MAX, file) != NULL) {
+        while (fgets(file_content, BUFFER_SIZE, file) != NULL) {
             write(client_sock_desc, file_content, strlen(file_content));
         }
         fclose(file);
