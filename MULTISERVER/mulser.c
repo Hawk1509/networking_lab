@@ -8,7 +8,7 @@
 #include <signal.h>
 #include <unistd.h>
 
-#define PORT 2006
+#define PORT 2005
 #define MAX_CLIENTS 10
 #define BUFFER_SIZE 1024
 
@@ -24,31 +24,31 @@ void broadcast_message(char *message, int sender_sock) {
 }
 
 // Handle client communication
-void handle_client(int client_sock) {
+void handle_client(int client_sock_desc) {
     char buffer[BUFFER_SIZE];
     int bytes_received;
 
     while (1) {
         memset(buffer, 0, BUFFER_SIZE);
-        bytes_received = recv(client_sock, buffer, BUFFER_SIZE, 0);
+        bytes_received = recv(client_sock_desc, buffer, BUFFER_SIZE, 0);
         if (bytes_received <= 0) {
             printf("Client disconnected.\n");
             break;
         }
 
         printf("Client: %s\n", buffer);
-        broadcast_message(buffer, client_sock);
+        broadcast_message(buffer, client_sock_desc);
     }
 
     // Remove client from the list
     for (int i = 0; i < MAX_CLIENTS; i++) {
-        if (client_sockets[i] == client_sock) {
+        if (client_sockets[i] == client_sock_desc) {
             client_sockets[i] = 0;
             break;
         }
     }
 
-    close(client_sock);
+    close(client_sock_desc);
     exit(0); // Terminate child process
 }
 
@@ -57,10 +57,7 @@ void main() {
 
     // Create a TCP socket (AF_INET for IPv4, SOCK_STREAM for TCP)
     sock_desc = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock_desc == -1) {
-        perror("Socket creation failed");
-        exit(EXIT_FAILURE);
-    }
+    
     printf("Socket created successfully.\n");
 
     // Set up the server address structure
@@ -72,17 +69,10 @@ void main() {
     socklen_t client_len = sizeof(client_addr);
 
     // Bind the socket to the address and port specified in server_addr
-    if (bind(sock_desc, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
-        perror("Bind failed");
-        exit(EXIT_FAILURE);
-    }
-    printf("Bind successful.\n");
-
+    bind(sock_desc, (struct sockaddr*)&server_addr, sizeof(server_addr));
+    
     // Listen for incoming connections; allow up to 10 pending connections
-    if (listen(sock_desc, MAX_CLIENTS) == -1) {
-        perror("Listen failed");
-        exit(EXIT_FAILURE);
-    }
+    listen(sock_desc, MAX_CLIENTS);
     printf("Listening for connections on port %d...\n", PORT);
 
     // Accept multiple clients

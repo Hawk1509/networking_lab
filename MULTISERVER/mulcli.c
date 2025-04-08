@@ -7,7 +7,7 @@
 #include <arpa/inet.h>  // Needed for inet_addr()
 #include <signal.h>
 
-#define PORT 2006          // Define the port number to connect to
+#define PORT 2005         // Define the port number to connect to
 #define BUFFER_SIZE 1024   // Define the buffer size for messages
 
 // Function to receive messages from the server asynchronously
@@ -19,11 +19,6 @@ void receive_messages(int sock_desc) {
     while (1) {
         memset(buffer, 0, BUFFER_SIZE);  // Clear the buffer before receiving a new message
         bytes_received = recv(sock_desc, buffer, BUFFER_SIZE, 0);  // Receive message
-        if (bytes_received <= 0) {
-            printf("Disconnected from server.\n");
-            close(sock_desc);  // Close the socket
-            exit(0);            // Terminate the child process
-        }
 
         // Print the received message from the server
         printf("Server: %s", buffer);
@@ -36,10 +31,6 @@ void main() {
 
     // Create a TCP socket (IPv4, SOCK_STREAM for TCP)
     sock_desc = socket(AF_INET, SOCK_STREAM, 0);  // AF_INET for IPv4, SOCK_STREAM for TCP
-    if (sock_desc == -1) {  // If socket creation fails
-        perror("Socket creation failed");
-        exit(EXIT_FAILURE);  // Exit with failure status
-    }
     printf("Socket created successfully.\n");
 
     // Set up the server's address
@@ -82,5 +73,4 @@ void main() {
     }
 
     close(sock_desc);  // Close the socket when done
-    return 0;  // Exit the program
 }
