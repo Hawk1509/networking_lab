@@ -36,7 +36,7 @@ void main()
     printf("Connection established\n");
 
     // Receive data from the client and store it in buf (up to 100 bytes)
-    int bytes_received = recv(client_sock_desc, buffer, 100, 0);
+    int bytes_received = recv(client_sock_desc, buffer, BUFFER_SIZE, 0);
 
     // Print the message received from the client
     printf("Message from client: %s\n", buffer);

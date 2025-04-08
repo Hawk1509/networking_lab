@@ -25,9 +25,9 @@ void main() {
 
     // Prompt the user for a message to send
     printf("Enter message to be sent: ");
-    fgets(buffer, 100, stdin);
+    fgets(buffer, BUFFER_SIZE, stdin);
 
     // Send the message to the server
-    k = send(sock_desc, buffer, 100, 0);
+    k = send(sock_desc, buffer, BUFFER_SIZE, 0);
 
 }
