@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 
 #define SERV_TCP_PORT 5035
-#define MAX 60
+#define BUFFER_SIZE 60
 int main(int arg,char*argv[])
 {
        int sockfd,n;
@@ -19,7 +19,7 @@ int main(int arg,char*argv[])
 
        struct hostent*server;
 
-       char send[MAX],recvline[MAX],s[MAX],name[MAX];
+       char send[BUFFER_SIZE],recvline[BUFFER_SIZE],s[BUFFER_SIZE],name[BUFFER_SIZE];
 
        sockfd=socket(AF_INET,SOCK_STREAM,0);
 
@@ -31,9 +31,9 @@ int main(int arg,char*argv[])
 
        printf("\nEnter the source file name : \n");
        scanf("%s",send);
-       write(sockfd,send,MAX);
+       write(sockfd,send,BUFFER_SIZE);
        
-       while((n=read(sockfd,recvline,MAX))!=0)
+       while((n=read(sockfd,recvline,BUFFER_SIZE))!=0)
        {
           printf("%s",recvline);
        }
