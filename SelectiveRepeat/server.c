@@ -15,7 +15,7 @@ void process_client(int client_sock_desc) {
     int *received = (int *)calloc(MAX, sizeof(int)); // Array to track received frames
 
     while (1) {
-        bzero(buff, MAX);
+        //bzero(buff, MAX);
         recv(client_sock_desc, buff, MAX, 0);
 
         if (strcmp("Exit", buff) == 0) {
@@ -55,45 +55,33 @@ void process_client(int client_sock_desc) {
 
 void main() {
     int sock_desc, client_sock_desc, client_len;
-    struct sockaddr_in server, client;
 
     // Create the server socket
     sock_desc = socket(AF_INET, SOCK_STREAM, 0);
 
-    bzero(&server, sizeof(server));
+    //bzero(&server, sizeof(server));
+    
+    struct sockaddr_in server, client;
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = htonl(INADDR_ANY);
     server.sin_port = htons(PORT);
 
     // Bind the socket to the server's address
-    if (bind(sock_desc, (SA *)&server, sizeof(server)) != 0) {
-        printf("Socket bind failed\n");
-        exit(0);
-    }
+    bind(sock_desc, (SA *)&server, sizeof(server));
 
     // Listen for incoming connections
-    if (listen(sock_desc, 5) != 0) {
-        printf("Listen failed\n");
-        exit(0);
-    }
+    listen(sock_desc, 5);
 
     printf("Server listening on port %d...\n", PORT);
 
     // Accept an incoming client connection
     client_len = sizeof(client);
     client_sock_desc = accept(sock_desc, (SA *)&client, &client_len);
-    if (client_sock_desc < 0) {
-        printf("Server accept failed\n");
-        exit(0);
-    }
 
     printf("Connection established with client\n");
 
     // Process the client
     process_client(client_sock_desc);
 
-    // Close the sockets
-    close(client_sock_desc);
-    close(sock_desc);
 
 }
