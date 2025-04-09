@@ -31,10 +31,6 @@ void handle_client(int client_sock_desc) {
     while (1) {
         memset(buffer, 0, BUFFER_SIZE);
         bytes_received = recv(client_sock_desc, buffer, BUFFER_SIZE, 0);
-        if (bytes_received <= 0) {
-            printf("Client disconnected.\n");
-            break;
-        }
 
         printf("Client: %s\n", buffer);
         broadcast_message(buffer, client_sock_desc);
@@ -48,8 +44,6 @@ void handle_client(int client_sock_desc) {
         }
     }
 
-    close(client_sock_desc);
-    exit(0); // Terminate child process
 }
 
 void main() {
@@ -79,10 +73,6 @@ void main() {
     while (1) {
         // Prepare to accept a connection from a client
         client_sock_desc = accept(sock_desc, (struct sockaddr*)&client_addr, &client_len);
-        if (client_sock_desc == -1) {
-            perror("Accept failed");
-            continue;
-        }
         printf("New client connected: %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
         // Add client to the list
@@ -108,5 +98,4 @@ void main() {
             }
         }
     }
-    close(sock_desc);
 }

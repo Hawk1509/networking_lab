@@ -41,10 +41,6 @@ void main() {
 
     // Connect to the server
     k = connect(sock_desc, (struct sockaddr*)&server, sizeof(server));  // Attempt connection
-    if (k == -1) {  // If connection fails
-        perror("Connection failed");
-        exit(EXIT_FAILURE);  // Exit with failure status
-    }
     printf("Connected to the server.\n");
 
     // Create a child process to handle receiving messages asynchronously
@@ -63,8 +59,7 @@ void main() {
             k = send(sock_desc, buffer, strlen(buffer), 0);  // Send message to server
             if (k == -1) {  // If sending fails
                 perror("Send failed");
-                close(sock_desc);  // Close socket and exit
-                exit(EXIT_FAILURE);
+                exit(EXIT_FAILURE);  // Exit with failure
             }
         }
     } else {  // If fork fails
@@ -72,5 +67,4 @@ void main() {
         exit(EXIT_FAILURE);
     }
 
-    close(sock_desc);  // Close the socket when done
 }
