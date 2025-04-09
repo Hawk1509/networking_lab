@@ -45,26 +45,19 @@ void main() {
 
     // Create a child process to handle receiving messages asynchronously
     pid_t pid = fork();  // Fork a child process
-    if (pid == 0) {  // Child process
-        // Receive messages from the server
+
+    if (pid < 0) {  // If fork fails
+        perror("Fork failed");
+        exit(EXIT_FAILURE);
+    } else if (pid == 0) {  // Child process
         receive_messages(sock_desc);
-    } else if (pid > 0) {  // Parent process
-        // Keep sending messages from the user to the server
+    } else {  // Parent process
         while (1) {
-            memset(buffer, 0, BUFFER_SIZE);  // Clear the buffer before reading input
+            memset(buffer, 0, BUFFER_SIZE);  // Clear buffer
             printf("Enter message to be sent: ");
             fgets(buffer, BUFFER_SIZE, stdin);  // Get user input
 
-            // Send the user input to the server
-            k = send(sock_desc, buffer, strlen(buffer), 0);  // Send message to server
-            if (k == -1) {  // If sending fails
-                perror("Send failed");
-                exit(EXIT_FAILURE);  // Exit with failure
+            send(sock_desc, buffer, sizeof(buffer), 0);  // Send message to server
             }
         }
-    } else {  // If fork fails
-        perror("Fork failed");
-        exit(EXIT_FAILURE);
-    }
-
 }
