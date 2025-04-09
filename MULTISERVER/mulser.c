@@ -18,7 +18,7 @@ int client_sockets[MAX_CLIENTS] = {0};  // Stores connected clients
 void broadcast_message(char *message, int sender_sock) {
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (client_sockets[i] != 0 && client_sockets[i] != sender_sock) {
-            send(client_sockets[i], message, strlen(message), 0);
+            send(client_sockets[i], message, sizeof(message), 0);
         }
     }
 }
@@ -71,31 +71,27 @@ void main() {
 
     // Accept multiple clients
     while (1) {
-        // Prepare to accept a connection from a client
-        client_sock_desc = accept(sock_desc, (struct sockaddr*)&client_addr, &client_len);
-        printf("New client connected: %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+    client_sock_desc = accept(sock_desc, (struct sockaddr*)&client_addr, &client_len);
+    printf("New client connected: %s\n", inet_ntoa(client_addr.sin_addr));
 
-        // Add client to the list
-        int i;
-        for (i = 0; i < MAX_CLIENTS; i++) {
-            if (client_sockets[i] == 0) {
-                client_sockets[i] = client_sock_desc;
-                break;
-            }
-        }
-
-        if (i == MAX_CLIENTS) {
-            printf("Server is full! Rejecting client.\n");
-            close(client_sock_desc);
-        } else {
-            // Fork a new process for each client
-            pid_t pid = fork();
-            if (pid == 0) { // Child process
-                close(sock_desc); // Child does not need the server socket
-                handle_client(client_sock_desc);
-            } else if (pid < 0) {
-                perror("Fork failed");
-            }
+    int i;
+    for (i = 0; i < MAX_CLIENTS; i++) {
+        if (client_sockets[i] == 0) {
+            // Found an available slot, add client socket
+            client_sockets[i] = client_sock_desc;
+            break;
         }
     }
+
+    if (i == MAX_CLIENTS) {
+        // No available slot, reject the client
+        printf("Server is full! Rejecting client.\n");
+        close(client_sock_desc);
+    } else if (fork() == 0) { // Child process
+        // Close the server socket in the child process
+        //close(sock_desc);
+        handle_client(client_sock_desc);
+    }
 }
+
+    }
