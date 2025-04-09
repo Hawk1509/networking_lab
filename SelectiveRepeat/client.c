@@ -1,56 +1,93 @@
-#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <time.h>
-#include <unistd.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
-void func(int sockfd, int nf, int ws)
-{
-	char buff[80];
-	int ack, i = 0, k, f;
+#include <unistd.h>
 
-	snprintf(buff, sizeof(buff), "%d", i);
-	write(sockfd, buff, sizeof(buff));
-	read(sockfd, buff, sizeof(buff));
-	ack = atoi(buff);
-	printf("Frames Sending : ");
-	for (k = 0; k < 8; k++) {
-		printf("%d ", k);
-	}
-	printf("\nFrame %d not sent properly. \n", ack);
-	printf("Resending Frame : ");
-	printf("%d ", ack);
-	printf("\n");
-	snprintf(buff, sizeof(buff), "%d", ack + 1);
-	write(sockfd, buff, sizeof(buff));
-	read(sockfd, buff, sizeof(buff));
-	if (strcmp("end", buff) == 0) {
-		printf("All frames sent successfully\n");
-		printf("Exit\n");
-	}
+#define PORT 8080
+#define BUFFER_SIZE 100
+#define SA struct sockaddr
+
+struct timeval timeout;
+
+void send_frames(int sock_desc, int num_frames, int window_size) {
+    char buffer[BUFFER_SIZE];
+    int ack, i = 0, k, w1 = 0, w2 = window_size - 1;
+    int *acked = (int *)calloc(num_frames, sizeof(int));
+
+    // Set socket receive timeout
+    setsockopt(sock_desc, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+
+    // Initial frame sending
+    for (i = 0; i < num_frames && i <= w2; i++) {
+        snprintf(buffer, sizeof(buffer), "%d", i);
+        send(sock_desc, buffer, sizeof(buffer), 0);
+        printf("Frame %d sent\n", i);
+    }
+
+    while (1) {
+        if (w2 - w1 < window_size - 1 && i < num_frames) {
+            snprintf(buffer, sizeof(buffer), "%d", i);
+            send(sock_desc, buffer, sizeof(buffer), 0);
+            printf("Frame %d sent\n", i);
+            w2++;
+            i++;
+        }
+
+        // Receive acknowledgment
+        bzero(buffer, sizeof(buffer));
+        int n = recv(sock_desc, buffer, BUFFER_SIZE, 0);
+        if (n > 0) {
+            ack = atoi(buffer);
+            if (ack == -1) {
+                printf("NACK received for frame %d\n", w1);
+                snprintf(buffer, sizeof(buffer), "%d", w1);
+                send(sock_desc, buffer, sizeof(buffer), 0);
+            } else {
+                acked[ack] = 1;
+                printf("Acknowledgment received for frame %d\n", ack);
+                while (acked[w1] && w1 < num_frames) {
+                    w1++;
+                }
+            }
+
+            if (ack + 1 == num_frames) {
+                snprintf(buffer, sizeof(buffer), "Exit");
+                send(sock_desc, buffer, sizeof(buffer), 0);
+                break;
+            }
+        } else {
+            printf("Timeout, resending frame %d\n", w1);
+            snprintf(buffer, sizeof(buffer), "%d", w1);
+            send(sock_desc, buffer, sizeof(buffer), 0);
+        }
+    }
+
+    free(acked);
 }
-int main() {
-	int sockfd, connfd, f, w;
-	struct sockaddr_in servaddr, cli;
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sockfd == -1) {
-		printf("Socket creation failed\n");
-		exit(0);
-	}
-	 else
-		printf("Socket successfully created\n");
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	servaddr.sin_port = htons(8080);
-	if (connect(sockfd, (struct sockaddr * ) & servaddr, sizeof(servaddr)) != 0) {
-		printf("Connection with the reciever failed\n");
-		exit(0);
-	}
-	 else
-		printf("Connected to the reciever\n");
-	f = 0;
-	func(sockfd, f, 1);
-	close(sockfd);
+
+void main() {
+    int sock_desc, num_frames, window_size;
+    struct sockaddr_in server;
+    
+    sock_desc = socket(AF_INET, SOCK_STREAM, 0);
+
+    server.sin_family = AF_INET;
+    server.sin_port = htons(PORT);
+    inet_pton(AF_INET, "127.0.0.1", &server.sin_addr);
+
+    timeout.tv_sec = 3;
+    timeout.tv_usec = 0;
+
+    connect(sock_desc, (SA *)&server, sizeof(server));
+
+    printf("Enter the number of frames: ");
+    scanf("%d", &num_frames);
+    printf("Enter the window size: ");
+    scanf("%d", &window_size);
+
+    send_frames(sock_desc, num_frames, window_size);
+
 }

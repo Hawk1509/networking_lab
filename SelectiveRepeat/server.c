@@ -1,79 +1,99 @@
-#include <netdb.h>
-#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <sys/types.h>
+#include <netinet/in.h>
 #include <unistd.h>
-#include <arpa/inet.h>
-void func(int connfd)
-{
-	char buff[80];
-	int f, c, win, ack, k;
-	win = 8;
-	read(connfd, buff, sizeof(buff));
-	if (strcmp("end", buff) == 0) {
-		printf("Exit\n");
-	}
-	f = atoi(buff);
-	f = atoi(buff);
-	for (k = 0; k < f; k++)
-		printf("\n%d ", k);
-	c = rand() % (win - 1);
-	c = rand() % (win - 1);
-	for (k = 0; k < win; k++) {
-		if (k != c) {
-	sleep(1);
-	printf("\nRecieved Frame: %d\n ", k);
-	}
-	}
-	sleep(c);
-	printf("\nFrame %d not received\nWaiting for Frame %d\n", c, c);
-	ack = c;
-	snprintf(buff, sizeof(buff), "%d", ack);
-	write(connfd, buff, sizeof(buff));
-	read(connfd, buff, sizeof(buff));
-	if (strcmp("end", buff) == 0) {
-	printf("Exit\n");
-	}
-	f = atoi(buff);
-	sleep(1);
-	printf("\nRecieved Frame %d\n", (f - 1));
-	printf("\n");
-	strcpy(buff, "end");
-	write(connfd, buff, sizeof(buff));
+
+#define MAX 80
+#define PORT 8080
+#define SA struct sockaddr
+
+void process_client(int client_sock_desc) {
+    char buff[MAX];
+    int frame, ack, next = 0;
+    int *received = (int *)calloc(MAX, sizeof(int)); // Array to track received frames
+
+    while (1) {
+        bzero(buff, MAX);
+        recv(client_sock_desc, buff, MAX, 0);
+
+        if (strcmp("Exit", buff) == 0) {
+            printf("Exit\n");
+            break;
+        }
+
+        frame = atoi(buff);
+        if (frame < next || frame >= next + MAX) {
+            // Out-of-order frame, send NACK
+            printf("Frame %d discarded\nNACK sent: %d\n", frame, next - 1);
+            snprintf(buff, sizeof(buff), "%d", -1); // Send NACK
+            send(client_sock_desc, buff, sizeof(buff), 0);
+            continue;
+        }
+
+        // Simulate random packet loss or delays
+        ack = rand() % 3;
+        switch (ack) {
+            case 0: // Frame not received, send NACK
+                printf("Frame %d not received\nNACK sent: %d\n", frame, next - 1);
+                snprintf(buff, sizeof(buff), "%d", -1); // Send NACK
+                send(client_sock_desc, buff, sizeof(buff), 0);
+                break;
+            case 1: // Frame received with delay
+            case 2: // Frame received correctly
+                received[frame] = 1;
+                printf("Frame %d received\nAcknowledgment sent: %d\n", frame, frame);
+                snprintf(buff, sizeof(buff), "%d", frame);
+                send(client_sock_desc, buff, sizeof(buff), 0);
+                break;
+        }
+    }
+
+    free(received);
 }
-int main() {
-	int sockfd, connfd, len;
-	struct sockaddr_in servaddr, cli;
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sockfd == -1) {
-		printf("Socket creation failed\n");
-		exit(0);
-	}
-	printf("Socket successfully created\n");
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	servaddr.sin_port = htons(8080);
-	if ((bind(sockfd, (struct sockaddr * ) & servaddr, sizeof(servaddr))) != 0)
-	{
-		printf("socket bind failed\n");
-		exit(0);
-	}
-	printf("Socket successfully binded\n");
-	if ((listen(sockfd, 5)) != 0) {
-		printf("Listen failed\n");
-		exit(0);
-	}
-	printf("Server listening\n");
-	len = sizeof(cli);
-	connfd = accept(sockfd, (struct sockaddr * ) & cli, & len);
-	if (connfd < 0) {
-		printf("Server accept failed\n");
-		exit(0);
-	}
-	printf("Server accept the client\n");
-	func(connfd);
-	close(sockfd);
+
+void main() {
+    int sock_desc, client_sock_desc, client_len;
+    struct sockaddr_in server, client;
+
+    // Create the server socket
+    sock_desc = socket(AF_INET, SOCK_STREAM, 0);
+
+    bzero(&server, sizeof(server));
+    server.sin_family = AF_INET;
+    server.sin_addr.s_addr = htonl(INADDR_ANY);
+    server.sin_port = htons(PORT);
+
+    // Bind the socket to the server's address
+    if (bind(sock_desc, (SA *)&server, sizeof(server)) != 0) {
+        printf("Socket bind failed\n");
+        exit(0);
+    }
+
+    // Listen for incoming connections
+    if (listen(sock_desc, 5) != 0) {
+        printf("Listen failed\n");
+        exit(0);
+    }
+
+    printf("Server listening on port %d...\n", PORT);
+
+    // Accept an incoming client connection
+    client_len = sizeof(client);
+    client_sock_desc = accept(sock_desc, (SA *)&client, &client_len);
+    if (client_sock_desc < 0) {
+        printf("Server accept failed\n");
+        exit(0);
+    }
+
+    printf("Connection established with client\n");
+
+    // Process the client
+    process_client(client_sock_desc);
+
+    // Close the sockets
+    close(client_sock_desc);
+    close(sock_desc);
+
 }
