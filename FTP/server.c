@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     printf("\nClient connected!\n");
 
     // Close the main socket (not needed anymore)
-    close(sock_desc);
+    //close(sock_desc);
 
     // Read the filename from the client
     memset(buffer, 0, BUFFER_SIZE);
@@ -46,24 +46,25 @@ int main(int argc, char *argv[]) {
     printf("\nClient requested file: %s\n", buffer);
 
     // Open the requested file
+
     FILE *file = fopen(buffer, "r");
     if (file == NULL) {
-        // If file not found, send "File not found" message to the client
-        strcpy(file_content, "File not found\n");
-        write(client_sock_desc, file_content, strlen(file_content));
-        printf("\nFile not found. Message sent to client.\n");
+        // Log the error server-side
+        printf("\nFile not found. No message sent to client.\n");
     } else {
-        // Send file content to the client
+        // Transfer file content to the client
         printf("\nTransferring file...\n");
-        while (fgets(file_content, BUFFER_SIZE, file) != NULL) {
+        while (fgets(file_content, sizeof(file_content), file)) {
             write(client_sock_desc, file_content, strlen(file_content));
         }
         fclose(file);
         printf("\nFile transferred successfully.\n");
     }
+    
+
 
     // Clean up
-    close(client_sock_desc);
+    //close(client_sock_desc);
     printf("\nServer closing.\n");
 
     return 0;
